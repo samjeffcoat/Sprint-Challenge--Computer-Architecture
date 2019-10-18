@@ -21,6 +21,7 @@ class CPU:
             "PUSH": 0b01000101,
             "POP": 0b01000110,
             "CMP": 0b10100111,
+            "JMP": 0b01010100,
         }
         self.sp = 0xF4
         self.flag = 0b00000000
@@ -144,6 +145,9 @@ class CPU:
             elif IR == self.operations["CMP"]:
                 self.alu(self.operations["CMP"], operand_a, operand_b)
                 self.pc += 3
+
+            elif IR == self.operations["JMP"]:
+                self.pc = self.reg[operand_a]
 
             else:
                 print(f"Unknown instruction: {self.ram[self.pc]}")
