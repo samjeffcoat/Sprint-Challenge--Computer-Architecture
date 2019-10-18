@@ -20,8 +20,10 @@ class CPU:
             "MUL": 0b10100010,
             "PUSH": 0b01000101,
             "POP": 0b01000110,
+            "CMP": 0b10100111,
         }
         self.sp = 0xF4
+        self.flag = 0b00000000
 
     # should accept the address to read and return the value stored there.
     def ram_read(self, MAR):  # The MAR contains the address that is being read or written to
@@ -64,6 +66,21 @@ class CPU:
         elif op == self.operations["MUL"]:
             mul = self.reg[reg_a] * self.reg[reg_b]
             self.reg[reg_a] = mul
+
+        elif op == self.operations["CMP"]:
+            # FL bits: 00000LGE from the LS-8 Documentation
+            x_1 = self.reg[reg_a]
+            x_2 = self.reg[reg_b]
+            # if they are equal set it to 1, otherwise set to 0 per the documentation
+            if x_1 == x_2:
+                self.flag = 0b00000001
+            # if register A is less than registerB, set the Less-thn L flag to 1, otherwise set it to zero
+            if x_1 < x_2:
+                self.flag = 0b00000100
+            # if register A is greater than G flag to 1, otherwise set it to zero
+            if x_1 > x_2:
+                self.flag = 0b00000010
+
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -95,7 +112,7 @@ class CPU:
         # self.trace()
         running = True
         while running:
-            #self.trace()
+            # self.trace()
             IR = self.ram[self.pc]
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
@@ -123,6 +140,10 @@ class CPU:
                 self.reg[operand_a] = self.ram[self.sp]
                 self.sp = (self.sp + 1) & 0xFF
                 self.pc += 2
+
+            elif IR == self.operations["CMP"]:
+                self.alu(self.operations["CMP"], operand_a, operand_b)
+                self.pc += 3
 
             else:
                 print(f"Unknown instruction: {self.ram[self.pc]}")
